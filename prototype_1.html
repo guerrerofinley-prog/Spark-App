@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prototype</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 30px 16px;
+  }
+
+  .phone-outline {
+    width: min(380px, 90vw);
+    aspect-ratio: 89 / 186;
+    border: 10px solid #000000;
+    border-radius: 60px;
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
+    background: #ffffff;
+  }
+
+  .notch {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 27%;
+    height: 3.2%;
+    min-height: 18px;
+    background: #000000;
+    border-radius: 14px;
+    z-index: 5;
+  }
+
+  .device {
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    position: relative;
+    padding: 50px 26px 24px;
+    overflow-y: auto;
+  }
+
+  .screen { display: none; }
+  .screen.active {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+
+  .dark-bar {
+    width: 100%;
+    height: 38px;
+    border-radius: 8px;
+    background: #2b2b2b;
+  }
+
+  .back-row {
+    height: 90px;
+    display: flex;
+    align-items: center;
+  }
+
+  .heart-grid {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    row-gap: 32px;
+    column-gap: 12px;
+    justify-items: center;
+  }
+
+  .heart-btn {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button.heart-btn { cursor: pointer; }
+  span.heart-btn { cursor: default; }
+
+  .heart-btn:active .heart-emoji {
+    filter: brightness(0.9);
+  }
+
+  .heart-emoji {
+    font-size: 64px;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .heart-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .home-btn-wrap {
+    margin-top: auto;
+    padding-top: 40px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .home-btn {
+    border: none;
+    background: none;
+    font-size: 44px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .home-btn:active {
+    filter: brightness(0.9);
+  }
+
+  .task-content {
+    margin-top: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .task-pencil {
+    font-size: 52px;
+  }
+
+  .task-heading {
+    margin-top: 18px;
+    font-size: 24px;
+    font-weight: 600;
+    color: #2b2b2b;
+  }
+
+  .step-content {
+    margin-top: 56px;
+    text-align: center;
+  }
+
+  .progress-wrap {
+    margin-top: 4px;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #ece9e2;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #F5921C;
+    border-radius: 3px;
+    transition: width 0.2s ease;
+  }
+
+  .progress-label {
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #8a8a8a;
+    text-align: right;
+  }
+
+  .step-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2b2b2b;
+    line-height: 1.4;
+  }
+
+  .step-btn-row {
+    margin-top: 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .step-btn {
+    padding: 14px;
+    border-radius: 20px;
+    border: none;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .step-btn.primary {
+    background: #2b2b2b;
+    color: #ffffff;
+  }
+
+  .step-btn.secondary {
+    background: #ffffff;
+    color: #2b2b2b;
+    border: 1.5px solid #e4e1d8;
+  }
+
+  .complete-heart {
+    font-size: 64px;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-outline">
+  <div class="notch"></div>
+  <div class="device" id="device">
+
+  <!-- Screen 1: home -->
+  <section id="screen-home" class="screen active">
+    <div class="dark-bar"></div>
+    <div class="heart-grid">
+      <button class="heart-btn" data-nav="screen-clean">
+        <span class="heart-emoji">🧡</span><span class="heart-label">Clean</span>
+      </button>
+      <button class="heart-btn" data-nav="screen-chores">
+        <span class="heart-emoji">🧡</span><span class="heart-label">Chores</span>
+      </button>
+      <button class="heart-btn" data-nav="screen-homework">
+        <span class="heart-emoji">🧡</span><span class="heart-label">Homework</span>
+      </button>
+      <button class="heart-btn" data-nav="screen-packing">
+        <span class="heart-emoji">🧡</span><span class="heart-label">Packing</span>
+      </button>
+      <button class="heart-btn" data-nav="screen-routine">
+        <span class="heart-emoji">🧡</span><span class="heart-label">Routine</span>
+      </button>
+      <button class="heart-btn" data-nav="screen-other">
+        <span class="heart-emoji">🧡</span><span class="heart-label">other</span>
+      </button>
+    </div>
+    <div class="home-btn-wrap">
+      <button class="home-btn" data-nav="screen-home">🏠</button>
+    </div>
+  </section>
+
+  <!-- Screen 2: clean room select -->
+  <section id="screen-clean" class="screen">
+    <div class="back-row">
+      <button class="heart-btn" data-nav="screen-home">
+        <span class="heart-emoji">🧡</span><span class="heart-label">Back</span>
+      </button>
+    </div>
+    <div class="heart-grid">
+      <button class="heart-btn" data-nav="screen-clean-bedroom-page1">
+        <span class="heart-emoji">🧡</span><span class="heart-label">Bedroom</span>
+      </button>
+      <button class="heart-btn" data-nav="screen-clean-kitchen-page1">
+        <span class="heart-emoji">🧡</span><span class="heart-label">Kitchen</span>
+      </button>
+      <button class="heart-btn" data-nav="screen-clean-bathroom-page1">
+        <span class="heart-emoji">🧡</span><span class="heart-label">Bathroom</span>
+      </button>
+      <button class="heart-btn" data-nav="screen-clean-office-page1">
+        <span class="heart-emoji">🧡</span><span class="heart-label">Office</span>
+      </button>
+      <button class="heart-btn" data-nav="screen-clean-livingroom-page1">
+        <span class="heart-emoji">🧡</span><span class="heart-label">Living Room</span>
+      </button>
+      <span class="heart-btn">
+        <span class="heart-emoji">🧡</span>
+      </span>
+    </div>
+    <div class="home-btn-wrap">
+      <button class="home-btn" data-nav="screen-home">🏠</button>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<script>
+  var device = document.getElementById('device');
+
+  // Placeholder second page for the one category without a designed layout yet.
+  var PLACEHOLDER_CATEGORIES = [
+    { id: 'other', heading: 'Other' }
+  ];
+
+  // Cleaning task flows, one per room. Bedroom uses the exact steps given;
+  // the others are made up to fit that room.
+  var ROOM_FLOWS = [
+    {
+      id: 'bedroom',
+      firstLabel: 'Complete Garbage',
+      steps: [
+        'Pick up all garbage in the room.',
+        'Pick up all dirty clothes and put them in the laundry basket.',
+        'Put all clean clothes where they belong.',
+        'Clear and organize all surfaces.',
+        'Pick up remaining items and clean the floor.'
+      ]
+    },
+    {
+      id: 'kitchen',
+      firstLabel: 'Complete Dishes',
+      steps: [
+        'Wash and put away all the dishes.',
+        'Wipe down and clear off the counters.',
+        'Take out the trash and replace the liner.',
+        'Put away food and wipe up spills in the fridge and pantry.',
+        'Sweep and clean the kitchen floor.'
+      ]
+    },
+    {
+      id: 'bathroom',
+      firstLabel: 'Complete Counter',
+      steps: [
+        'Clear and wipe down the counter and sink.',
+        'Clean and disinfect the toilet.',
+        'Scrub the shower or tub.',
+        'Wipe down the mirror and fixtures.',
+        'Sweep and mop the floor.'
+      ]
+    },
+    {
+      id: 'office',
+      firstLabel: 'Complete Desk',
+      steps: [
+        'Clear off and organize the desk.',
+        'Sort papers into keep, file, or trash.',
+        'Untangle cables and put supplies away.',
+        'Wipe down surfaces and shelves.',
+        'Vacuum or sweep the floor.'
+      ]
+    },
+    {
+      id: 'livingroom',
+      firstLabel: 'Complete Clutter',
+      steps: [
+        'Pick up clutter and put items back where they belong.',
+        'Fluff pillows and fold blankets.',
+        'Dust and clear off tables and surfaces.',
+        'Collect and take out any trash.',
+        'Vacuum or sweep the floor.'
+      ]
+    }
+  ];
+
+  function buildStepScreen(id, text, buttonsHtml, stepIndex, totalSteps) {
+    var pct = Math.round(((stepIndex + 1) / totalSteps) * 100);
+    var section = document.createElement('section');
+    section.id = id;
+    section.className = 'screen';
+    section.innerHTML =
+      '<div class="progress-wrap">' +
+        '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="progress-label">Step ' + (stepIndex + 1) + ' of ' + totalSteps + '</div>' +
+      '</div>' +
+      '<div class="step-content">' +
+        '<div class="step-text">' + text + '</div>' +
+        '<div class="step-btn-row">' + buttonsHtml + '</div>' +
+      '</div>' +
+      '<div class="home-btn-wrap"><button class="home-btn" data-nav="screen-home">🏠</button></div>';
+    device.appendChild(section);
+  }
+
+  function buildItemFlow(categoryId, item, completeText) {
+    var base = 'screen-' + categoryId + '-' + item.id + '-page';
+    var completeId = 'screen-' + categoryId + '-' + item.id + '-complete';
+
+    item.steps.forEach(function (text, i) {
+      var pageId = base + (i + 1);
+      var buttons;
+      if (i === 0) {
+        buttons = '<button class="step-btn primary" data-nav="' + base + '2">' + item.firstLabel + '</button>';
+      } else if (i === item.steps.length - 1) {
+        buttons = '<button class="step-btn primary" data-nav="' + completeId + '">Complete</button>';
+      } else {
+        buttons =
+          '<button class="step-btn primary" data-nav="' + base + (i + 2) + '">Next</button>' +
+          '<button class="step-btn secondary" data-nav="' + base + i + '">Back</button>';
+      }
+      buildStepScreen(pageId, text, buttons, i, item.steps.length);
+    });
+
+    var section = document.createElement('section');
+    section.id = completeId;
+    section.className = 'screen';
+    section.innerHTML =
+      '<div class="step-content">' +
+        '<div class="complete-heart">🧡</div>' +
+        '<div class="step-text">' + completeText + '</div>' +
+      '</div>' +
+      '<div class="home-btn-wrap"><button class="home-btn" data-nav="screen-home">🏠</button></div>';
+    device.appendChild(section);
+  }
+
+  function buildItemSelectionScreen(categoryId, items) {
+    var heartsHtml = '';
+    items.forEach(function (item) {
+      heartsHtml += '<button class="heart-btn" data-nav="screen-' + categoryId + '-' + item.id + '-page1">' +
+        '<span class="heart-emoji">🧡</span><span class="heart-label">' + item.label + '</span></button>';
+    });
+    heartsHtml += '<span class="heart-btn"><span class="heart-emoji">🧡</span></span>';
+
+    var section = document.createElement('section');
+    section.id = 'screen-' + categoryId;
+    section.className = 'screen';
+    section.innerHTML =
+      '<div class="back-row">' +
+        '<button class="heart-btn" data-nav="screen-home">' +
+          '<span class="heart-emoji">🧡</span><span class="heart-label">Back</span>' +
+        '</button>' +
+      '</div>' +
+      '<div class="heart-grid">' + heartsHtml + '</div>' +
+      '<div class="home-btn-wrap"><button class="home-btn" data-nav="screen-home">🏠</button></div>';
+    device.appendChild(section);
+  }
+
+  ROOM_FLOWS.forEach(function (item) { buildItemFlow('clean', item, 'Cleaning Complete'); });
+
+  // Item flows for the other four categories: each item gets its own
+  // 5-step flow made up to fit it, same structure as the Clean rooms.
+  var CATEGORY_FLOWS = [
+    {
+      id: 'chores',
+      items: [
+        { id: 'dishes', label: 'Dishes', firstLabel: 'Complete Rinse', steps: [
+          'Clear food scraps and rinse the dishes.',
+          'Load the dishwasher or wash by hand.',
+          'Dry and put away clean dishes.',
+          'Wipe down the sink and surrounding counter.',
+          'Take out any kitchen trash.'
+        ]},
+        { id: 'laundry', label: 'Laundry', firstLabel: 'Complete Sort', steps: [
+          'Sort clothes into lights and darks.',
+          'Start a load of laundry.',
+          'Move wet clothes to the dryer.',
+          'Fold and put away clean laundry.',
+          'Start the next load if needed.'
+        ]},
+        { id: 'trash', label: 'Trash', firstLabel: 'Complete Gather', steps: [
+          'Gather trash bags from each room.',
+          'Tie up the full bags.',
+          'Carry the bags out to the bin.',
+          'Replace the liners in each trash can.',
+          'Take the bin to the curb if it\u2019s trash day.'
+        ]},
+        { id: 'vacuum', label: 'Vacuuming', firstLabel: 'Complete Clear', steps: [
+          'Clear the floor of any small items.',
+          'Vacuum the main walkways.',
+          'Vacuum under furniture where you can reach.',
+          'Empty the vacuum canister or bag if full.',
+          'Put the vacuum away.'
+        ]},
+        { id: 'yardwork', label: 'Yard Work', firstLabel: 'Complete Pickup', steps: [
+          'Pick up any yard debris or toys.',
+          'Mow or trim the grass.',
+          'Sweep the walkway or porch.',
+          'Water any plants that need it.',
+          'Put yard tools away.'
+        ]}
+      ]
+    },
+    {
+      id: 'homework',
+      items: [
+        { id: 'math', label: 'Math', firstLabel: 'Complete Gather', steps: [
+          'Gather your math book, notebook, and calculator.',
+          'Read through the assigned problems.',
+          'Work through the problems step by step.',
+          'Check your answers.',
+          'Pack your finished work back in your bag.'
+        ]},
+        { id: 'reading', label: 'Reading', firstLabel: 'Complete Setup', steps: [
+          'Find a quiet spot and get your book ready.',
+          'Read the assigned pages.',
+          'Jot down any notes or questions.',
+          'Answer any reading questions.',
+          'Mark your place and put the book away.'
+        ]},
+        { id: 'science', label: 'Science', firstLabel: 'Complete Gather', steps: [
+          'Gather your science notes and materials.',
+          'Review the assignment instructions.',
+          'Complete the worksheet or lab questions.',
+          'Double-check your answers.',
+          'Put your science work back in your folder.'
+        ]},
+        { id: 'writing', label: 'Writing', firstLabel: 'Complete Brainstorm', steps: [
+          'Brainstorm your ideas or outline.',
+          'Write a first draft.',
+          'Read back through and fix mistakes.',
+          'Make any final edits.',
+          'Save or turn in your finished writing.'
+        ]},
+        { id: 'history', label: 'History', firstLabel: 'Complete Gather', steps: [
+          'Gather your history textbook and notes.',
+          'Read the assigned section.',
+          'Answer the review questions.',
+          'Check your answers against your notes.',
+          'Put your history work away.'
+        ]}
+      ]
+    },
+    {
+      id: 'packing',
+      items: [
+        { id: 'schoolday', label: 'School Day', firstLabel: 'Complete Backpack', steps: [
+          'Pack your backpack with books and folders.',
+          'Add any finished homework.',
+          'Pack your lunch or lunch money.',
+          'Add a water bottle and any snacks.',
+          'Set your backpack by the door.'
+        ]},
+        { id: 'overnight', label: 'Overnight Trip', firstLabel: 'Complete Clothes', steps: [
+          'Pack a change of clothes and pajamas.',
+          'Pack your toothbrush and toiletries.',
+          'Pack your phone charger.',
+          'Pack a pillow or blanket if needed.',
+          'Double-check you have everything by the door.'
+        ]},
+        { id: 'sports', label: 'Sports Practice', firstLabel: 'Complete Uniform', steps: [
+          'Pack your uniform or practice clothes.',
+          'Pack your shoes and any gear.',
+          'Pack a water bottle.',
+          'Pack a snack for after practice.',
+          'Set your bag by the door.'
+        ]},
+        { id: 'weekend', label: 'Weekend Trip', firstLabel: 'Complete Clothes', steps: [
+          'Pack clothes for each day of the trip.',
+          'Pack your toiletries.',
+          'Pack any chargers or electronics.',
+          'Pack snacks or entertainment for the ride.',
+          'Double-check your bag before you leave.'
+        ]},
+        { id: 'vacation', label: 'Vacation', firstLabel: 'Complete Clothes', steps: [
+          'Pack clothes for the whole trip.',
+          'Pack toiletries and medications.',
+          'Pack travel documents and tickets.',
+          'Pack chargers, headphones, and entertainment.',
+          'Do a final check against your packing list.'
+        ]}
+      ]
+    },
+    {
+      id: 'routine',
+      items: [
+        { id: 'morning', label: 'Morning', firstLabel: 'Complete Wake Up', steps: [
+          'Wake up and make your bed.',
+          'Get washed up and get dressed.',
+          'Eat breakfast.',
+          'Brush your teeth.',
+          'Grab your bag and head out.'
+        ]},
+        { id: 'bedtime', label: 'Bedtime', firstLabel: 'Complete Tidy', steps: [
+          'Tidy up your room a bit.',
+          'Put on pajamas.',
+          'Brush your teeth and wash up.',
+          'Set out clothes for tomorrow.',
+          'Get in bed and wind down.'
+        ]},
+        { id: 'afterschool', label: 'After School', firstLabel: 'Complete Unpack', steps: [
+          'Unpack your backpack.',
+          'Have a snack.',
+          'Start your homework.',
+          'Take a break or free time.',
+          'Get ready for the evening.'
+        ]},
+        { id: 'weekend', label: 'Weekend', firstLabel: 'Complete Wake Up', steps: [
+          'Wake up and get dressed.',
+          'Eat breakfast.',
+          'Do any weekend chores.',
+          'Enjoy free time or activities.',
+          'Wind down for the evening.'
+        ]},
+        { id: 'workout', label: 'Workout', firstLabel: 'Complete Warmup', steps: [
+          'Warm up for a few minutes.',
+          'Do your main workout.',
+          'Cool down and stretch.',
+          'Drink water and refuel.',
+          'Put away any equipment.'
+        ]}
+      ]
+    }
+  ];
+
+  var CATEGORY_COMPLETE_TEXT = {
+    chores: 'Chore Complete',
+    homework: 'Homework Complete',
+    packing: 'Packing Complete',
+    routine: 'Routine Complete'
+  };
+
+  CATEGORY_FLOWS.forEach(function (cat) {
+    buildItemSelectionScreen(cat.id, cat.items);
+    cat.items.forEach(function (item) { buildItemFlow(cat.id, item, CATEGORY_COMPLETE_TEXT[cat.id]); });
+  });
+
+  function buildPlaceholderScreen(cat) {
+    var blankHearts = '';
+    for (var i = 0; i < 6; i++) {
+      blankHearts += '<button class="heart-btn" data-nav="screen-task-' + cat.id + '">' +
+        '<span class="heart-emoji">🧡</span></button>';
+    }
+    var section = document.createElement('section');
+    section.id = 'screen-' + cat.id;
+    section.className = 'screen';
+    section.innerHTML =
+      '<div class="back-row">' +
+        '<button class="heart-btn" data-nav="screen-home">' +
+          '<span class="heart-emoji">🧡</span><span class="heart-label">Back</span>' +
+        '</button>' +
+      '</div>' +
+      '<div class="heart-grid">' + blankHearts + '</div>' +
+      '<div class="home-btn-wrap"><button class="home-btn" data-nav="screen-home">🏠</button></div>';
+    device.appendChild(section);
+  }
+
+  function buildTaskScreen(id, heading) {
+    var section = document.createElement('section');
+    section.id = 'screen-task-' + id;
+    section.className = 'screen';
+    section.innerHTML =
+      '<div class="task-content">' +
+        '<div class="task-pencil">✏️</div>' +
+        '<div class="task-heading">' + heading + '</div>' +
+      '</div>' +
+      '<div class="home-btn-wrap"><button class="home-btn" data-nav="screen-home">🏠</button></div>';
+    device.appendChild(section);
+  }
+
+  PLACEHOLDER_CATEGORIES.forEach(function (cat) {
+    buildPlaceholderScreen(cat);
+    buildTaskScreen(cat.id, cat.heading);
+  });
+
+  // Navigation: works for both static and generated buttons via delegation.
+  device.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-nav]');
+    if (!btn) return;
+    var current = device.querySelector('.screen.active');
+    if (current) current.classList.remove('active');
+    document.getElementById(btn.dataset.nav).classList.add('active');
+  });
+</script>
+
+</body>
+</html>
